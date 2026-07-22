@@ -1,6 +1,8 @@
 locals {
+  # Host keys must be files (not env vars), so this module materializes them into
+  # the tmpfs secrets mount. Environment variables and password secrets are
+  # provided by the server module (gcp-gce-server) in <secrets_mount>/app.env.
   secrets_init_sh = templatefile("${path.module}/templates/secrets-init.sh.tpl", {
-    secret_names         = var.secret_names
     hostkey_secret_names = var.hostkey_secret_names
     secrets_mount        = var.secrets_mount
   })
@@ -12,12 +14,13 @@ locals {
   docker_up_sh = <<-EOT
 #!/usr/bin/env bash
 set -euo pipefail
+# Materialize SSH host-key files. Environment variables and password secrets are
+# provided by the server module in ${var.secrets_mount}/app.env.
 /usr/local/bin/secrets-init.sh
-test -s ${var.secrets_mount}/app.env || { echo "secrets missing, refusing to start"; exit 1; }
+test -s ${var.secrets_mount}/app.env || { echo "app.env missing (server secret loader did not run); refusing to start"; exit 1; }
 docker rm -f ${var.container_name} 2>/dev/null || true
 docker run -d --name ${var.container_name} --restart unless-stopped \
   --env-file ${var.secrets_mount}/app.env \
-  ${join(" ", [for k, v in var.app_env : "-e ${k}=\"${v}\""])} \
   -v ${var.secrets_mount}:${var.secrets_mount}:ro \
   -v ${var.data_dir}:${var.data_dir} \
   ${join(" ", [for p in var.ports : "-p ${p.host_ip}:${p.published}:${p.target}"])} \
