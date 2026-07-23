@@ -26,7 +26,7 @@ EOT
   cloud_init_content = {
     write_files = [
       {
-        path        = "/app/docker-app-up.sh"
+        path        = "/app/${var.container_name}/docker-app-up.sh"
         permissions = "0755"
         owner       = "root:root"
         content     = local.docker_up_sh

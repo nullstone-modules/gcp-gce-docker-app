@@ -1,7 +1,8 @@
 variable "app_metadata" {
-  description = <<EOF
-Nullstone injects metadata from the parent app module through this reserved variable.
-EOF
+  description = <<EOD
+Nullstone automatically injects metadata from the app module into this module through this variable.
+This variable is a reserved variable for capabilities.
+EOD
 
   type    = map(string)
   default = {}
@@ -9,13 +10,18 @@ EOF
 
 variable "image_url" {
   type        = string
-  description = "Container image to run (for example ghcr.io/drakkan/sftpgo:v2.6)."
+  description = "Container image to run, e.g. ghcr.io/drakkan/sftpgo:v2.6"
 }
 
 variable "container_name" {
   type        = string
   default     = "app"
-  description = "Docker container name."
+  description = "Docker container name, also used as the systemd service name for the application."
+
+  validation {
+    condition     = can(regex("^[a-zA-Z0-9][a-zA-Z0-9_.-]*$", var.container_name))
+    error_message = "container_name must be a valid systemd service name: start with a letter or digit and contain only letters, digits, and the characters _ . -"
+  }
 }
 
 variable "ports" {
@@ -25,35 +31,17 @@ variable "ports" {
     host_ip   = optional(string, "0.0.0.0")
   }))
   default     = []
-  description = "Host ports to publish. Bind admin UIs to 127.0.0.1."
-}
-
-variable "app_env" {
-  type        = map(string)
-  default     = {}
-  description = "Non-sensitive container env vars (exported via the env capability output)."
-}
-
-variable "secret_names" {
-  type        = map(string)
-  default     = {}
-  description = "ENV_VAR => existing GSM secret id. Exported as secret() refs for server IAM and app.env loading."
-}
-
-variable "hostkey_secret_names" {
-  type        = list(string)
-  default     = []
-  description = "GSM secret ids for SSH host-key files written into the tmpfs secrets mount."
+  description = "Ports to publish from the container to the VM."
 }
 
 variable "data_dir" {
   type        = string
   default     = "/var/lib/app"
-  description = "Persistent host directory mounted into the container."
+  description = "Persistent data directory on the VM mounted into the container."
 }
 
 variable "secrets_mount" {
   type        = string
   default     = "/run/app-secrets"
-  description = "Tmpfs mount for secrets (RAM only; never on the boot disk)."
+  description = "Tmpfs path where gcp-gce-server places app.env and any secret files. Bind-mounted read-only into the container."
 }

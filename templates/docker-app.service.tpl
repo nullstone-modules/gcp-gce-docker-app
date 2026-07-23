@@ -6,7 +6,7 @@ Requires=docker.service
 [Service]
 Type=oneshot
 RemainAfterExit=yes
-ExecStart=/app/docker-app-up.sh
+ExecStart=/app/${container_name}/docker-app-up.sh
 ExecStop=/usr/bin/docker rm -f ${container_name}
 
 [Install]
