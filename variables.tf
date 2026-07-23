@@ -1,7 +1,6 @@
 variable "app_metadata" {
   description = <<EOF
-Nullstone automatically injects metadata from the app module into this module through this variable.
-This variable is a reserved variable for capabilities.
+Nullstone injects metadata from the parent app module through this reserved variable.
 EOF
 
   type    = map(string)
@@ -10,13 +9,13 @@ EOF
 
 variable "image_url" {
   type        = string
-  description = "Container image to run, e.g. ghcr.io/drakkan/sftpgo:v2.6"
+  description = "Container image to run (for example ghcr.io/drakkan/sftpgo:v2.6)."
 }
 
 variable "container_name" {
   type        = string
   default     = "app"
-  description = "Docker container name for the application."
+  description = "Docker container name."
 }
 
 variable "ports" {
@@ -26,35 +25,35 @@ variable "ports" {
     host_ip   = optional(string, "0.0.0.0")
   }))
   default     = []
-  description = "Ports to publish from the container to the VM."
+  description = "Host ports to publish. Bind admin UIs to 127.0.0.1."
 }
 
 variable "app_env" {
   type        = map(string)
   default     = {}
-  description = "Non-sensitive env vars for the container (merged with Nullstone-provided env at the app level)."
+  description = "Non-sensitive container env vars (exported via the env capability output)."
 }
 
 variable "secret_names" {
   type        = map(string)
   default     = {}
-  description = "Map of ENV_VAR_NAME => Secret Manager secret name to fetch at boot into tmpfs."
+  description = "ENV_VAR => existing GSM secret id. Exported as secret() refs for server IAM and app.env loading."
 }
 
 variable "hostkey_secret_names" {
   type        = list(string)
   default     = []
-  description = "Secret Manager secret names holding SSH host keys written into tmpfs at boot."
+  description = "GSM secret ids for SSH host-key files written into the tmpfs secrets mount."
 }
 
 variable "data_dir" {
   type        = string
   default     = "/var/lib/app"
-  description = "Persistent data directory on the VM mounted into the container."
+  description = "Persistent host directory mounted into the container."
 }
 
 variable "secrets_mount" {
   type        = string
   default     = "/run/app-secrets"
-  description = "Tmpfs mount path for secrets fetched at boot (RAM only)."
+  description = "Tmpfs mount for secrets (RAM only; never on the boot disk)."
 }

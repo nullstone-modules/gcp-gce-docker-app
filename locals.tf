@@ -1,7 +1,5 @@
 locals {
-  # Host keys must be files (not env vars), so this module materializes them into
-  # the tmpfs secrets mount. Environment variables and password secrets are
-  # provided by the server module (gcp-gce-server) in <secrets_mount>/app.env.
+  # Host-key files only. Env/password secrets come from gcp-gce-server via app.env.
   secrets_init_sh = templatefile("${path.module}/templates/secrets-init.sh.tpl", {
     hostkey_secret_names = var.hostkey_secret_names
     secrets_mount        = var.secrets_mount
@@ -11,11 +9,11 @@ locals {
     container_name = var.container_name
   })
 
+  # Re-run the server loader on every start: /run/app-secrets is tmpfs and clears on reboot.
   docker_up_sh = <<-EOT
 #!/usr/bin/env bash
 set -euo pipefail
-# Materialize SSH host-key files. Environment variables and password secrets are
-# provided by the server module in ${var.secrets_mount}/app.env.
+/usr/local/bin/load-app-secrets.sh
 /usr/local/bin/secrets-init.sh
 test -s ${var.secrets_mount}/app.env || { echo "app.env missing (server secret loader did not run); refusing to start"; exit 1; }
 docker rm -f ${var.container_name} 2>/dev/null || true
