@@ -1,32 +1,29 @@
 # gcp-gce-docker-app
 
 Nullstone capability that runs a Docker container on a `gcp-gce-server` instance
-(Container-Optimized OS).
+(Container-Optimized OS) as a systemd service.
 
 ## How it works
 
-`gcp-gce-server` installs `load-app-secrets.sh` and writes env/secret manifests.
-This capability:
+`gcp-gce-server` owns all environment variables and secrets. Per the server
+contract, it writes `app.env` (and any secret files) to a known tmpfs path
+(`/run/app-secrets` by default). This capability only:
 
-1. Re-runs the server loader on every `docker-app` start (tmpfs clears on reboot).
-2. Materializes SSH host-key **files** into the tmpfs secrets mount.
-3. Starts the container with `--env-file /run/app-secrets/app.env` (plain
-   `docker run` + systemd; no Compose plugin).
+1. Re-runs the server loader on every service start (tmpfs clears on reboot).
+2. Starts the container as `<container_name>.service` with
+   `--env-file /run/app-secrets/app.env` (plain `docker run` + systemd).
+
+The secrets mount is bind-mounted read-only into the container, so any secret
+files the server places there (for example SSH host keys) are visible to the app.
 
 ## Requirements
 
-- Docker-capable image (COS recommended).
-- VM service account needs `secretAccessor` on each **host-key** secret
-  (env/password secrets are granted by the server module). Example:
+- A Docker-capable image (Container-Optimized OS recommended).
 
-```bash
-gcloud secrets add-iam-policy-binding HOSTKEY_SECRET_NAME \
-  --member="serviceAccount:VM_SERVICE_ACCOUNT" \
-  --role="roles/secretmanager.secretAccessor" \
-  --project=PROJECT_ID
-```
+Secret access (IAM) is handled by `gcp-gce-server`; this capability requires no
+`secretAccessor` grants.
 
 ## Inputs
 
-See `variables.tf`: `image_url` (required), `ports`, `app_env`, `secret_names`,
-`hostkey_secret_names`, `container_name`, `data_dir`, `secrets_mount`.
+See `variables.tf`: `image_url` (required), `container_name`, `ports`,
+`data_dir`, `secrets_mount`.

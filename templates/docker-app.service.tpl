@@ -1,12 +1,12 @@
 [Unit]
-Description=Docker app via secrets bootstrap
+Description=${container_name} (docker app via gcp-gce-server secrets)
 After=network-online.target docker.service
 Requires=docker.service
 
 [Service]
 Type=oneshot
 RemainAfterExit=yes
-ExecStart=/usr/local/bin/docker-app-up.sh
+ExecStart=/app/docker-app-up.sh
 ExecStop=/usr/bin/docker rm -f ${container_name}
 
 [Install]
