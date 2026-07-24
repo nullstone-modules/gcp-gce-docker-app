@@ -33,3 +33,16 @@ variable "ports" {
   default     = []
   description = "Ports to publish from the container to the VM."
 }
+
+variable "volumes" {
+  type = list(object({
+    src       = string
+    target    = string
+    read_only = optional(bool, true)
+  }))
+  default     = []
+  description = <<EOD
+Extra bind mounts from the VM host into the container (for example SSH host key
+files under SECRETS_MOUNT_DIR mapped to app-specific paths).
+EOD
+}

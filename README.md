@@ -13,8 +13,9 @@ contract, it writes `app.env` (and any secret files) to a known tmpfs path
 2. Starts the container as `<container_name>.service` with
    `--env-file /run/app-secrets/app.env` (plain `docker run` + systemd).
 
-The secrets mount is bind-mounted read-only into the container, so any secret
-files the server places there (for example SSH host keys) are visible to the app.
+The secrets mount is bind-mounted read-only into the container. Use `volumes` to
+map specific host paths (for example SSH host keys) to app-specific container
+paths.
 
 ## Requirements
 
@@ -25,6 +26,16 @@ Secret access (IAM) is handled by `gcp-gce-server`; this capability requires no
 
 ## Inputs
 
-See `variables.tf`: `image_url` (required), `container_name`, `ports`.
+See `variables.tf`: `image_url` (required), `container_name`, `ports`, `volumes`.
 `data_dir` and `secrets_mount` are injected by `gcp-gce-server` via `app_metadata`
 (not user-configurable).
+
+Example host-key volume mounts:
+
+```yaml
+volumes:
+  - src: "/run/app-secrets/id_ed25519"
+    target: "/etc/sftpgo/id_ed25519"
+  - src: "/run/app-secrets/id_rsa"
+    target: "/etc/sftpgo/id_rsa"
+```

@@ -10,6 +10,11 @@ locals {
     container_name = var.container_name
   })
 
+  volume_flags = join(" ", [
+    for v in var.volumes :
+    "-v ${v.src}:${v.target}${v.read_only ? ":ro" : ""}"
+  ])
+
   # Env/password secrets and any secret files are provided by gcp-gce-server at
   # ${local.secrets_mount} (see README contract). Re-run the server loader on every
   # start because ${local.secrets_mount} is tmpfs and clears on reboot.
@@ -23,6 +28,7 @@ docker run -d --name ${var.container_name} --restart unless-stopped \
   --env-file ${local.secrets_mount}/app.env \
   -v ${local.secrets_mount}:${local.secrets_mount}:ro \
   -v ${local.data_dir}:${local.data_dir} \
+  ${local.volume_flags} \
   ${join(" ", [for p in var.ports : "-p ${p.host_ip}:${p.published}:${p.target}"])} \
   ${var.image_url}
 EOT
