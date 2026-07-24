@@ -27,24 +27,22 @@ docker run -d --name ${var.container_name} --restart unless-stopped \
   ${var.image_url}
 EOT
 
-  cloud_init_content = {
-    write_files = jsonencode([
-      {
-        path        = "/app/${var.container_name}/docker-app-up.sh"
-        permissions = "0755"
-        owner       = "root:root"
-        content     = local.docker_up_sh
-      },
-      {
-        path        = "/etc/systemd/system/${local.service_name}"
-        permissions = "0644"
-        owner       = "root:root"
-        content     = local.docker_app_service
-      },
-    ])
-    runcmd = jsonencode([
-      "systemctl daemon-reload",
-      "systemctl enable --now ${local.service_name}",
-    ])
-  }
+  cloud_init_write_files = jsonencode([
+    {
+      path        = "/app/${var.container_name}/docker-app-up.sh"
+      permissions = "0755"
+      owner       = "root:root"
+      content     = local.docker_up_sh
+    },
+    {
+      path        = "/etc/systemd/system/${local.service_name}"
+      permissions = "0644"
+      owner       = "root:root"
+      content     = local.docker_app_service
+    },
+  ])
+  cloud_init_runcmd = jsonencode([
+    "systemctl daemon-reload",
+    "systemctl enable --now ${local.service_name}",
+  ])
 }
