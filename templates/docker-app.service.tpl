@@ -1,5 +1,5 @@
 [Unit]
-Description=${container_name} (docker app via gcp-gce-server secrets)
+Description=${container_name} (docker app via gcp-gce-server)
 After=network-online.target docker.service
 Requires=docker.service
 

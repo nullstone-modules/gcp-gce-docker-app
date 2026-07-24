@@ -25,5 +25,6 @@ Secret access (IAM) is handled by `gcp-gce-server`; this capability requires no
 
 ## Inputs
 
-See `variables.tf`: `image_url` (required), `container_name`, `ports`,
-`data_dir`, `secrets_mount`.
+See `variables.tf`: `image_url` (required), `container_name`, `ports`.
+`data_dir` and `secrets_mount` are injected by `gcp-gce-server` via `app_metadata`
+(not user-configurable).

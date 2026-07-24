@@ -33,15 +33,3 @@ variable "ports" {
   default     = []
   description = "Ports to publish from the container to the VM."
 }
-
-variable "data_dir" {
-  type        = string
-  default     = "/var/lib/app"
-  description = "Persistent data directory on the VM mounted into the container."
-}
-
-variable "secrets_mount" {
-  type        = string
-  default     = "/run/app-secrets"
-  description = "Tmpfs path where gcp-gce-server places app.env and any secret files. Bind-mounted read-only into the container."
-}
