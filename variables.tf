@@ -36,7 +36,18 @@ variable "ports" {
     container_port = number
   }))
   default     = []
-  description = "Ports to publish from the container to the VM."
+  description = <<EOD
+Ports to publish from the container to the VM.
+Each entry becomes a `docker run -p <host_ip>:<host_port>:<container_port>` flag.
+
+Example:
+```
+ports = [
+  { host_port = 2222, container_port = 22 },
+  { host_ip = "127.0.0.1", host_port = 8080, container_port = 80 },
+]
+```
+EOD
 }
 
 variable "volumes" {
@@ -49,5 +60,15 @@ variable "volumes" {
   description = <<EOD
 Extra bind mounts from the VM host into the container (for example SSH host key
 files under SECRETS_MOUNT_DIR mapped to app-specific paths).
+Each entry becomes a `docker run -v <src>:<target>[:ro]` flag; mounts are read-only
+unless `read_only = false`.
+
+Example:
+```
+volumes = [
+  { src = "/var/lib/myapp/secrets/ssh_host_ed25519_key", target = "/etc/ssh/ssh_host_ed25519_key" },
+  { src = "/var/lib/myapp/data", target = "/data", read_only = false },
+]
+```
 EOD
 }
