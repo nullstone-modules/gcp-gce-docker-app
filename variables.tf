@@ -8,9 +8,14 @@ EOD
   default = {}
 }
 
+locals {
+  data_dir      = var.app_metadata["data_dir"]
+  secrets_mount = var.app_metadata["secrets_mount"]
+}
+
 variable "image_url" {
   type        = string
-  description = "Container image to run, e.g. ghcr.io/drakkan/sftpgo:v2.6"
+  description = "Container image to run"
 }
 
 variable "container_name" {
@@ -26,9 +31,9 @@ variable "container_name" {
 
 variable "ports" {
   type = list(object({
-    published = number
-    target    = number
-    host_ip   = optional(string, "0.0.0.0")
+    host_ip        = optional(string, "0.0.0.0")
+    host_port      = number
+    container_port = number
   }))
   default     = []
   description = "Ports to publish from the container to the VM."

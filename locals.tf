@@ -1,8 +1,4 @@
 locals {
-  # Coordinated with gcp-gce-server via app_metadata (not user-configurable).
-  data_dir      = var.app_metadata["data_dir"]
-  secrets_mount = var.app_metadata["secrets_mount"]
-
   # Systemd service is named after the container so admins run `systemctl status <container_name>`.
   service_name = "${var.container_name}.service"
 
@@ -13,6 +9,11 @@ locals {
   volume_flags = join(" ", [
     for v in var.volumes :
     "-v ${v.src}:${v.target}${v.read_only ? ":ro" : ""}"
+  ])
+
+  port_flags = join(" ", [
+    for p in var.ports :
+    "-p ${p.host_ip}:${p.host_port}:${p.container_port}"
   ])
 
   # Env/password secrets and any secret files are provided by gcp-gce-server at
@@ -29,7 +30,7 @@ docker run -d --name ${var.container_name} --restart unless-stopped \
   -v ${local.secrets_mount}:${local.secrets_mount}:ro \
   -v ${local.data_dir}:${local.data_dir} \
   ${local.volume_flags} \
-  ${join(" ", [for p in var.ports : "-p ${p.host_ip}:${p.published}:${p.target}"])} \
+  ${local.port_flags} \
   ${var.image_url}
 EOT
 
