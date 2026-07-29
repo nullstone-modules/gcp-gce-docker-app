@@ -9,7 +9,8 @@ Nullstone capability that runs a Docker container on a `gcp-gce-server` instance
 contract, it writes `app.env` (and any secret files) to a known tmpfs path
 (`/run/app-secrets` by default). This capability only:
 
-1. Re-runs the server loader on every service start (tmpfs clears on reboot).
+1. Re-runs the server loader (`/etc/nullstone/load-app-secrets.sh`) on every
+   service start (tmpfs clears on reboot).
 2. Starts the container as `<container_name>.service` with
    `--env-file /run/app-secrets/app.env` (plain `docker run` + systemd).
 
@@ -39,8 +40,8 @@ image_url: "ghcr.io/drakkan/sftpgo:v2.6"
 ### `container_name` (optional, default `app`)
 
 Names three things at once: the Docker container, the systemd unit
-(`<container_name>.service`), and the on-disk script directory
-(`/app/<container_name>/docker-app-up.sh`). Pick something an admin will
+(`/etc/systemd/system/<container_name>.service`), and the on-disk helper
+(`/etc/apps/<container_name>/docker-app-up.sh`). Pick something an admin will
 recognize, because it is what they type:
 
 ```bash

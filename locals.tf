@@ -2,8 +2,14 @@ locals {
   # Systemd service is named after the container so admins run `systemctl status <container_name>`.
   service_name = "${var.container_name}.service"
 
+  # COS: keep app helpers under /etc/apps/<name> (writable + executable).
+  # Units stay in the standard systemd path; server built-ins stay in /etc/nullstone.
+  app_dir       = "/etc/apps/${var.container_name}"
+  nullstone_dir = "/etc/nullstone"
+
   docker_app_service = templatefile("${path.module}/templates/docker-app.service.tpl", {
     container_name = var.container_name
+    app_dir        = local.app_dir
   })
 
   volume_flags = join(" ", [
@@ -22,7 +28,7 @@ locals {
   docker_up_sh = <<-EOT
 #!/usr/bin/env bash
 set -euo pipefail
-/app/load-app-secrets.sh
+${local.nullstone_dir}/load-app-secrets.sh
 test -s ${local.secrets_mount}/app.env || { echo "app.env missing (server secret loader did not run); refusing to start"; exit 1; }
 docker rm -f ${var.container_name} 2>/dev/null || true
 docker run -d --name ${var.container_name} --restart unless-stopped \
@@ -36,7 +42,7 @@ EOT
 
   cloud_init_write_files = [
     {
-      path        = "/app/${var.container_name}/docker-app-up.sh"
+      path        = "${local.app_dir}/docker-app-up.sh"
       permissions = "0755"
       owner       = "root:root"
       content     = local.docker_up_sh
