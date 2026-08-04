@@ -25,11 +25,31 @@ locals {
   # Env/password secrets and any secret files are provided by gcp-gce-server at
   # ${local.secrets_mount} (see README contract). Re-run the server loader on every
   # start because ${local.secrets_mount} is tmpfs and clears on reboot.
+  #
+  # docker pull retries: private-subnet VMs use Cloud NAT; on first boot / MIG
+  # replace, NAT can lag and a single pull times out (~15s). Fail closed only
+  # after retries are exhausted. Secrets stay fail-closed with no retry.
   docker_up_sh = <<-EOT
 #!/usr/bin/env bash
 set -euo pipefail
 ${local.nullstone_dir}/load-app-secrets.sh
 test -s ${local.secrets_mount}/app.env || { echo "app.env missing (server secret loader did not run); refusing to start"; exit 1; }
+
+image='${var.image_url}'
+pull_attempts=12
+pull_delay_sec=5
+for attempt in $(seq 1 "$pull_attempts"); do
+  if docker pull "$image"; then
+    break
+  fi
+  if [ "$attempt" -eq "$pull_attempts" ]; then
+    echo "docker pull failed after $${pull_attempts} attempts: $image" >&2
+    exit 1
+  fi
+  echo "docker pull attempt $attempt/$${pull_attempts} failed; retrying in $${pull_delay_sec}s..." >&2
+  sleep "$pull_delay_sec"
+done
+
 docker rm -f ${var.container_name} 2>/dev/null || true
 docker run -d --name ${var.container_name} --restart unless-stopped \
   --env-file ${local.secrets_mount}/app.env \
@@ -37,7 +57,7 @@ docker run -d --name ${var.container_name} --restart unless-stopped \
   -v ${local.data_dir}:${local.data_dir} \
   ${local.volume_flags} \
   ${local.port_flags} \
-  ${var.image_url}
+  "$image"
 EOT
 
   cloud_init_write_files = [
